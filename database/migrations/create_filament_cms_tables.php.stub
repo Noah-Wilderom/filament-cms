@@ -1,0 +1,74 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+class CreateFilamentCMSTables extends Migration {
+
+    public function up() {
+
+        Schema::create('posts', function (Blueprint $table) {
+            switch (config('filament-cms.post.id')) {
+                case 'uuid':
+                    $table->uuid('id')->primary();
+                    break;
+                case 'ulid':
+                    $table->ulid('id')->primary();
+                    break;
+                case 'id':
+                    $table->id();
+                    break;
+                default:
+                    $table->string('id')->primary();
+            }
+
+            $table->foreignIdFor(config('filament-cms.user.model'))
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->string('title');
+            $table->string('slug');
+            $table->string('status')->default(\NoahWilderom\FilamentCMS\Enums\PostStatus::Draft->value);
+            $table->string('type')->default(\NoahWilderom\FilamentCMS\Enums\PostType::Post->value);
+            $table->text('content');
+            $table->datetime('published_at');
+            $table->timestamps();
+        });
+
+        Schema::create('fields', function (Blueprint $table) {
+            switch (config('filament-cms.field.id')) {
+                case 'uuid':
+                    $table->uuid('id')->primary();
+                    break;
+                case 'ulid':
+                    $table->ulid('id')->primary();
+                    break;
+                case 'id':
+                    $table->id();
+                    break;
+                default:
+                    $table->string('id')->primary();
+            }
+
+            $table->string('model_type')->nullable();
+            $table->string('model_id')->nullable();
+            $table->string('name');
+            $table->string('title');
+            $table->string('default')->nullable();
+            $table->timestamps();
+        });
+
+    }
+
+    public function down() {
+        Schema::table('posts', function (Blueprint $table) {
+            $table->dropForeignIdFor(config('filament-cms.user.model'));
+        });
+
+        Schema::dropIfExists('posts');
+        Schema::dropIfExists('fields');
+    }
+
+}

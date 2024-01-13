@@ -1,0 +1,58 @@
+{
+    "name": "noahwilderom/filament-cms",
+    "description": "A simple to use Filament CMS",
+    "keywords": [],
+    "homepage": "https://github.com/Noah-Wilderom/filament-cms",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Noah Wilderom",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "filament/filament": "^3.0",
+        "filament/spatie-laravel-media-library-plugin": "^3.1",
+        "illuminate/contracts": "^10.0",
+        "pboivin/filament-peek": "^2.0"
+    },
+    "require-dev": {
+        "nunomaduro/collision": "^7.9",
+        "orchestra/testbench": "^8.0",
+        "phpunit/phpunit": "^10.0",
+        "spatie/laravel-ray": "^1.33"
+    },
+    "autoload": {
+        "files": [
+            "src/Support/helpers.php"
+        ],
+        "psr-4": {
+            "NoahWilderom\\FilamentCMS\\": "src/",
+            "NoahWilderom\\FilamentCMS\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "NoahWilderom\\FilamentCMS\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": "@php ./vendor/bin/testbench package:discover --ansi",
+        "test": "vendor/bin/phpunit"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "phpstan/extension-installer": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "NoahWilderom\\FilamentCMS\\Providers\\FilamentCMSServiceProvider",
+                "NoahWilderom\\FilamentCMS\\Providers\\FilamentCMSPanelProvider"
+            ]
+        }
+    }
+}
