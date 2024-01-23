@@ -23,6 +23,20 @@ if (! function_exists('getVersionPatch')) {
     }
 }
 
+if(! function_exists('getField')) {
+    function getField(string $name, string $modelId = null) {
+        $field = app(\NoahWilderom\FilamentCMS\Contracts\FilamentCMSField::class)
+            ->where('name', $name)
+            ->first();
+
+        if(is_null($modelId)) {
+            return $field?->values()->whereNull('model_id')->first()?->toValue();
+        }
+
+        return $field?->values()->where('model_id', $modelId)->first()->toValue();
+    }
+}
+
 if (! function_exists('getPosts')) {
     function getPosts(array $args = [], int $limit = -1): \NoahWilderom\FilamentCMS\Collections\PostCollection {
         return app(\NoahWilderom\FilamentCMS\Contracts\FilamentCMSPost::class)

@@ -41,6 +41,11 @@ return [
         ]
     ],
 
+    'field_values' => [
+        'model' => \NoahWilderom\FilamentCMS\Models\FieldValue::class,
+        'id' => 'uuid', // uuid, ulid, id or string
+    ],
+
     'routes' => [
         'api' => [
             'prefix' => '',

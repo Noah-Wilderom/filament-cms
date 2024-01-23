@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 use NoahWilderom\FilamentCMS\Collections\PostCollection;
+use NoahWilderom\FilamentCMS\Contracts\FilamentCMSField;
 use NoahWilderom\FilamentCMS\Contracts\FilamentCMSPost;
+use NoahWilderom\FilamentCMS\Enums\FieldType;
 use NoahWilderom\FilamentCMS\Enums\PostStatus;
 use NoahWilderom\FilamentCMS\Enums\PostType;
 use NoahWilderom\FilamentCMS\Traits\HasDynamicId;
@@ -32,9 +35,9 @@ class Post extends Model implements FilamentCMSPost, HasMedia
     ];
 
     protected $casts = [
-        'status' => PostStatus::class,
-        'type' => PostType::class,
-        'content' => 'array',
+        'status'       => PostStatus::class,
+        'type'         => PostType::class,
+        'content'      => 'array',
         'published_at' => 'datetime',
     ];
 
@@ -55,13 +58,14 @@ class Post extends Model implements FilamentCMSPost, HasMedia
             ->where('published_at', '<', now());
     }
 
-    public function user(): BelongsTo {
+    public function user(): BelongsTo
+    {
         return $this->belongsTo(config('filament-cms.user.model'));
     }
 
     public function scopeLimit(Builder $query, int $limit): Builder
     {
-        if($limit === -1) {
+        if ($limit === -1) {
             // Unlimited posts
             return $query;
         }
@@ -81,23 +85,51 @@ class Post extends Model implements FilamentCMSPost, HasMedia
         return $query;
     }
 
-    public function isSectionImage(int $sectionIndex): bool {
-        if($this->isSectionHTML($sectionIndex)) return false;
+    public function isSectionImage(int $sectionIndex): bool
+    {
+        if ($this->isSectionHTML($sectionIndex)) return false;
         return $this->content[$sectionIndex]['type'] === 'image';
     }
 
-    public function getSectionImageUrl(int $sectionIndex): string {
+    public function getSectionImageUrl(int $sectionIndex): string
+    {
         return url('storage/' . $this->content[$sectionIndex]['data']['file']);
     }
 
-    public function isSectionHTML(int $sectionIndex): bool {
+    public function isSectionHTML(int $sectionIndex): bool
+    {
         return $this->content[$sectionIndex]['type'] === 'html';
     }
-    public function getSectionHTML(int $sectionIndex): string {
+
+    public function getSectionHTML(int $sectionIndex): string
+    {
         return $this->content[$sectionIndex]['data']['content'];
     }
 
-    public function sections(): ?array {
+    public function sections(): ?array
+    {
         return $this->content;
+    }
+
+    public function fields(): HasMany
+    {
+        // TODO: Switch with interface
+        return $this->hasMany(FieldValue::class, 'model_id');
+    }
+
+    public function field(string $name): mixed
+    {
+        $fieldValue = $this->fields()->whereRelation('field', 'name', $name)->first();
+        if (is_null($fieldValue)) {
+
+            $fieldValue = app(FilamentCMSField::class)->where('name', $name)->first()?->default;
+        }
+
+        if (is_null($fieldValue)) {
+            return null;
+        }
+
+        $fieldValue->loadMissing(['field']);
+        return $fieldValue->toValue();
     }
 }

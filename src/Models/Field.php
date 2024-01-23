@@ -5,8 +5,10 @@ namespace NoahWilderom\FilamentCMS\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use NoahWilderom\FilamentCMS\Collections\FieldCollection;
 use NoahWilderom\FilamentCMS\Contracts\FilamentCMSField;
+use NoahWilderom\FilamentCMS\Enums\FieldType;
 use NoahWilderom\FilamentCMS\Traits\HasDynamicId;
 
 class Field extends Model implements FilamentCMSField
@@ -23,7 +25,7 @@ class Field extends Model implements FilamentCMSField
     ];
 
     protected $casts = [
-        ''
+        'type' => FieldType::class
     ];
 
     public function scopeResource(Builder $query, string $resource): Builder
@@ -33,5 +35,11 @@ class Field extends Model implements FilamentCMSField
     public function newCollection(array $models = []): FieldCollection
     {
         return new FieldCollection($models);
+    }
+
+    public function values(): HasMany
+    {
+        // TODO: Wrap to interface
+        return $this->hasMany(FieldValue::class);
     }
 }
