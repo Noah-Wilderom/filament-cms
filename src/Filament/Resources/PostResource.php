@@ -2,6 +2,8 @@
 
 namespace NoahWilderom\FilamentCMS\Filament\Resources;
 
+use Filament\Forms\Components\Checkbox;
+use Filament\Tables\Actions\RestoreAction;
 use Filament\Forms\Components\Builder;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Fieldset;
@@ -20,12 +22,17 @@ use Filament\Resources\Resource;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use NoahWilderom\FilamentCMS\Contracts\FilamentCMSField;
+use NoahWilderom\FilamentCMS\Contracts\FilamentCMSPost;
+use NoahWilderom\FilamentCMS\Enums\FieldType;
 use NoahWilderom\FilamentCMS\Enums\PostStatus;
 use NoahWilderom\FilamentCMS\Enums\PostType;
 use NoahWilderom\FilamentCMS\Filament\Resources\PostResource\Pages\CreatePost;
 use NoahWilderom\FilamentCMS\Filament\Resources\PostResource\Pages\EditPost;
 use NoahWilderom\FilamentCMS\Filament\Resources\PostResource\Pages\ListPosts;
+use NoahWilderom\FilamentCMS\Models\Post;
 
 class PostResource extends Resource
 {
@@ -42,6 +49,7 @@ class PostResource extends Resource
     }
 
     public static function form(Form $form): Form {
+        $customFieldsSchema = self::getCustomFieldsSchema();
         return $form
             ->schema([
                 Grid::make()
@@ -109,8 +117,9 @@ class PostResource extends Resource
 
                                     ]),
                             ]),
-                       Section::make()
-                            ->columnSpan(1)
+                       Section::make('Meta')
+                            ->aside()
+                           ->description('Lorem ipsum')
                             ->schema([
                                 Select::make('user_id')
                                     ->label('Author')
@@ -129,7 +138,6 @@ class PostResource extends Resource
                                     ->timezone('Europe/Amsterdam')
                                     ->format('d-m-Y H:i:s')
                                     ->default(now())
-                                    ->native(false)
                                     ->required(),
 
                                 Select::make('type')
@@ -146,8 +154,32 @@ class PostResource extends Resource
                                     ->required()
                                     ->options(PostStatus::casesToString()),
                             ]),
+                        Section::make('Custom Fields')
+                            ->aside()
+                            ->description('lorem ipsum')
+                            ->schema($customFieldsSchema)
                     ]),
             ]);
+    }
+
+    protected static function getCustomFieldsSchema(): array {
+        $fields = app(FilamentCMSField::class)->resource(static::getModel())->get();
+        $schema = [];
+        foreach($fields as $field) {
+            $schema[] = match($field->type) {
+                FieldType::Text->value => TextInput::make($field->id)
+                    ->label($field->title)
+                    ->default($field->default),
+                FieldType::Boolean->value => Checkbox::make($field->id)
+                    ->label($field->title)
+                    ->default(!!$field->default),
+                FieldType::DateTime->value => DateTimePicker::make($field->id)
+                    ->label($field->title)
+                    ->default($field->default),
+            };
+        }
+
+        return $schema;
     }
 
     /**
@@ -168,7 +200,12 @@ class PostResource extends Resource
 
                 TextColumn::make('status')
                     ->label('Status')
-                    ->badge()
+                    ->colors([
+                        'primary',
+                        'success' => PostStatus::Published->value,
+                        'danger' => PostStatus::Closed->value,
+                        'warning' => PostStatus::Draft->value,
+                    ])
                     ->sortable(),
 
                 TextColumn::make('type')
@@ -195,12 +232,17 @@ class PostResource extends Resource
                 //
             ])
             ->actions([
-                EditAction::make(),
+                EditAction::make()
+                    ->visible(fn (Model $post) => auth()->user()->can('update', $post))
+                    ->visible(fn(Model $post) => !$post->trashed()),
+                RestoreAction::make()
+                    ->requiresConfirmation()
             ])
             ->bulkActions([
                 //
             ]);
     }
+
 
     public static function getModel(): string
     {
@@ -221,4 +263,5 @@ class PostResource extends Resource
             'edit' => EditPost::route('/{record}/edit')
         ];
     }
+
 }

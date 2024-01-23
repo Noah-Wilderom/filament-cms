@@ -5,6 +5,7 @@ namespace NoahWilderom\FilamentCMS\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Compilers\BladeCompiler;
+use NoahWilderom\FilamentCMS\Contracts\FilamentCMSField;
 use NoahWilderom\FilamentCMS\Contracts\FilamentCMSPost;
 
 class FilamentCMSServiceProvider extends ServiceProvider {
@@ -29,6 +30,7 @@ class FilamentCMSServiceProvider extends ServiceProvider {
         $this->app->register(EventServiceProvider::class);
 
         $this->app->bind(FilamentCMSPost::class, config('filament-cms.post.model'));
+        $this->app->bind(FilamentCMSField::class, config('filament-cms.field.model'));
     }
 
     protected function registerBladeExtensions(BladeCompiler $bladeCompiler) {

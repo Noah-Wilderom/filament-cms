@@ -22,3 +22,13 @@ if (! function_exists('getVersionPatch')) {
         return isset($versionParts[2]) ? (int)$versionParts[2] : 0;
     }
 }
+
+if (! function_exists('getPosts')) {
+    function getPosts(array $args = [], int $limit = -1): \NoahWilderom\FilamentCMS\Collections\PostCollection {
+        return app(\NoahWilderom\FilamentCMS\Contracts\FilamentCMSPost::class)
+            ->published()
+            ->limit($limit)
+            ->withArgs($args)
+            ->get();
+    }
+}

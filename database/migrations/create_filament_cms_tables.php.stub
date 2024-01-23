@@ -34,6 +34,7 @@ class CreateFilamentCMSTables extends Migration {
             $table->string('type')->default(\NoahWilderom\FilamentCMS\Enums\PostType::Post->value);
             $table->text('content');
             $table->datetime('published_at');
+            $table->softDeletes();
             $table->timestamps();
         });
 
@@ -52,11 +53,40 @@ class CreateFilamentCMSTables extends Migration {
                     $table->string('id')->primary();
             }
 
+            $table->foreignIdFor(config('filament-cms.field.model'))
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
             $table->string('model_type')->nullable();
-            $table->string('model_id')->nullable();
-            $table->string('name');
             $table->string('title');
+            $table->string('name');
             $table->string('default')->nullable();
+            $table->string('type')->default(\NoahWilderom\FilamentCMS\Enums\FieldType::Text->value);
+            $table->timestamps();
+        });
+
+        Schema::create('field_values', function (Blueprint $table) {
+            switch (config('filament-cms.field.id')) {
+                case 'uuid':
+                    $table->uuid('id')->primary();
+                    break;
+                case 'ulid':
+                    $table->ulid('id')->primary();
+                    break;
+                case 'id':
+                    $table->id();
+                    break;
+                default:
+                    $table->string('id')->primary();
+            }
+
+            $table->foreignIdFor(config('filament-cms.field.model'))
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->string('model_id')->nullable();
+            $table->text('value');
             $table->timestamps();
         });
 
@@ -69,6 +99,7 @@ class CreateFilamentCMSTables extends Migration {
 
         Schema::dropIfExists('posts');
         Schema::dropIfExists('fields');
+        Schema::dropIfExists('field_values');
     }
 
 }

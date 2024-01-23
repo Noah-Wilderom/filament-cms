@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use NoahWilderom\FilamentCMS\Collections\PostCollection;
 use NoahWilderom\FilamentCMS\Contracts\FilamentCMSPost;
 use NoahWilderom\FilamentCMS\Enums\PostStatus;
@@ -17,9 +18,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Post extends Model implements FilamentCMSPost, HasMedia
 {
-    use HasFactory, HasDynamicId, InteractsWithMedia;
+    use HasFactory, HasDynamicId, InteractsWithMedia, SoftDeletes;
 
-    protected static string $configKey = 'post';
+    public static string $configKey = 'post';
     protected $fillable = [
         'user_id',
         'title',
@@ -56,6 +57,28 @@ class Post extends Model implements FilamentCMSPost, HasMedia
 
     public function user(): BelongsTo {
         return $this->belongsTo(config('filament-cms.user.model'));
+    }
+
+    public function scopeLimit(Builder $query, int $limit): Builder
+    {
+        if($limit === -1) {
+            // Unlimited posts
+            return $query;
+        }
+
+        return $query->take($limit);
+    }
+
+    public function scopeWithArgs(Builder $query, array $args): Builder
+    {
+        foreach ($args as $key => $value) {
+            // TODO: Add conditions
+            $query = match ($key) {
+                default => $query
+            };
+        }
+
+        return $query;
     }
 
     public function isSectionImage(int $sectionIndex): bool {

@@ -15,29 +15,56 @@ use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Filament\Http\Middleware\Authenticate;
+use NoahWilderom\FilamentCMS\Filament\Resources\FieldResource;
 use NoahWilderom\FilamentCMS\Filament\Resources\PostResource;
+use NoahWilderom\FilamentCMS\Filament\Resources\UserResource;
 use NoahWilderom\FilamentCMS\FilamentCMSTheme;
 use Pboivin\FilamentPeek\FilamentPeekPlugin;
 
 class FilamentCMSPanelProvider extends PanelProvider
 {
+    public function __construct($app)
+    {
+//        $this->checkAvailability();
+        parent::__construct($app);
+    }
+
     protected array $pages = [
         //
     ];
 
     protected array $resources = [
-        PostResource::class
+        PostResource::class,
+        FieldResource::class,
+        UserResource::class,
     ];
 
     protected array $widgets = [
         //
     ];
 
+    protected function checkAvailability(): void
+    {
+        $resources = [];
+       foreach($this->resources as $resource)  {
+           if(property_exists($resource::getModel(), 'configKey')) {
+               $isEnabled = config(sprintf('filament-cms.%s.enabled', $resource::getModel()::$configKey));
+               if(! $isEnabled) {
+                   continue;
+               }
+           }
+
+           $resources[] = $resource;
+       }
+
+       $this->resources = $resources;
+    }
+
     public function panel(Panel $panel): Panel
     {
         return $panel
             ->id('filament-cms')
-            ->path('cms')
+            ->path(config('filament-cms.cms.path'))
             ->brandName(sprintf('Filament CMS v%s', getVersionMajor()))
             ->login()
             ->plugins([

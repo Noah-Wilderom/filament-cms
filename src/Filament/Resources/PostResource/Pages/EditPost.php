@@ -6,6 +6,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\CreateRecord;
 use Filament\Resources\Pages\EditRecord;
+use NoahWilderom\FilamentCMS\Contracts\FilamentCMSField;
 use NoahWilderom\FilamentCMS\Filament\Resources\PostResource;
 
 class EditPost extends EditRecord
@@ -44,6 +45,17 @@ class EditPost extends EditRecord
 
             DeleteAction::make(),
         ];
+    }
+
+    public function mutateFormDataBeforeFill(array $data): array
+    {
+        foreach($data as $key => $value) {
+            if($field = app(FilamentCMSField::class)->find($key)) {
+                $data[$key] = $field->default;
+            }
+        }
+
+        return $data;
     }
 
 }
